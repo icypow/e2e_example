@@ -1,0 +1,11 @@
+{
+  "name": "color-change-detection",
+  "version": "1.0.0",
+  "description": "A demo to detect color changes in video",
+  "scripts": {
+    "start": "http-server -c-1"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
+  }
+}

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Color Change Detection</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <div id="root">
+    <h1>Video Color Change Detection</h1>
+
+    <div>
+      <input type="file" id="file-input" accept="video/*">
+    </div>
+    <div>
+      <button id="play-button">Play</button>
+      <button id="pause-button">Pause</button>
+      <button id="counter-button">Counter</button>
+    </div>
+    <video id="poem-video" width="640" height="360" controls crossorigin="anonymous">
+    </video>
+
+    <div id="sep"></div>
+    <div id="messages"></div>
+  </div>
+
+  <script>
+    const video = document.getElementById('poem-video');
+    const messages = document.getElementById('messages');
+    const fileInput = document.getElementById('file-input');
+
+    const playButton = document.getElementById('play-button');
+    const pauseButton = document.getElementById('pause-button');
+    const counterButton = document.getElementById('counter-button');
+
+    // Настройки области анализа цвета
+    const region = { x: 0, y: 0, width: 10, height: 10 };
+    let lastColor = null;
+
+    // Функция для добавления сообщений
+    const addMessage = (msg) => {
+      const messageElement = document.createElement('p');
+      messageElement.textContent = msg;
+      messages.appendChild(messageElement);
+      messages.scrollTop = messages.scrollHeight;
+    };
+
+    let counter = 0;
+    // Функция для анализа каждого кадра
+    const analyzeFrame = (now, metadata) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(region.x, region.y, region.width, region.height);
+      const pixels = imageData.data;
+
+      const r = pixels[0], g = pixels[1], b = pixels[2];
+      const currentColor = r + g + b > 382 ? 'white' : 'black';
+
+      if (lastColor !== null && currentColor !== lastColor) {
+        addMessage(`Color changed to ${currentColor} at ${now.toFixed(5)}s`);
+      }
+
+      lastColor = currentColor;
+
+      // Запрашиваем следующий кадр для анализа
+      if (!video.paused && !video.ended) {
+        video.requestVideoFrameCallback(analyzeFrame);
+      }
+      counter = counter + 1;
+    };
+
+    // Обработчик выбора видео
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        video.src = url;
+        addMessage(`Loaded video: ${file.name}`);
+      }
+    });
+
+    video.addEventListener('play', () => {
+      counter = 0;
+      video.requestVideoFrameCallback(analyzeFrame); // Запускаем анализ, как только начинается воспроизведение
+    });
+
+    // playButton.addEventListener('click', () => {
+    //   counter = 0;
+    //   video.play();
+    //   video.requestVideoFrameCallback(analyzeFrame); // Запускаем анализ, как только начинается воспроизведение
+    // });
+    console.log("WTF")
+    playButton.addEventListener('click', () => video.play());
+    pauseButton.addEventListener('click', () => video.pause());
+    counterButton.addEventListener('click', () => addMessage(`Counter = ${counter}`));
+  </script>
+</body>
+</html>
